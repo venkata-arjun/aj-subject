@@ -1,64 +1,55 @@
-# Advanced Java Programs
-
----
-
-## 4) JDBC Program using PreparedStatement
+## 7) JDBC Program Using Stored Procedures
 
 **Question:**  
-Write a JDBC program using the PreparedStatement object to create a Student table (RollNo, Name, Address) and perform insert, update, delete, and display operations.
+Write a JDBC program to interact with a database by creating and invoking stored procedures — one to insert a record into the Employee table and another to retrieve the salary of a given employee ID, and display the results.
 
-### Program: `StudentPreparedDemo.java`
+### SQL (Run in MySQL Before Running Java Program)
+```sql
+CREATE TABLE Employee (
+    EmpID INT PRIMARY KEY,
+    EmpName VARCHAR(50),
+    Salary INT
+);
+
+CREATE PROCEDURE InsertEmp(IN id INT, IN name VARCHAR(50), IN sal INT)
+BEGIN
+    INSERT INTO Employee VALUES(id, name, sal);
+END;
+
+CREATE PROCEDURE GetSalary(IN id INT, OUT sal INT)
+BEGIN
+    SELECT Salary INTO sal FROM Employee WHERE EmpID = id;
+END;
+```
+
+### Java Program: `StoredProcedureDemo.java`
 ```java
 import java.sql.*;
 
-public class StudentPreparedDemo {
+public class StoredProcedureDemo {
     public static void main(String[] args) {
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
 
             Connection con = DriverManager.getConnection(
-                    "jdbc:mysql://localhost:3306/testdb", "root", "password");
+                "jdbc:mysql://localhost:3306/testdb", "root", "password");
 
-            String create = "CREATE TABLE IF NOT EXISTS Student (" +
-                            "RollNo INT PRIMARY KEY, " +
-                            "Name VARCHAR(50), " +
-                            "Address VARCHAR(100))";
-            Statement stmt = con.createStatement();
-            stmt.executeUpdate(create);
-            System.out.println("Table Created Successfully");
+            // Insert Employee Record
+            CallableStatement cs1 = con.prepareCall("{call InsertEmp(?, ?, ?)}");
+            cs1.setInt(1, 101);
+            cs1.setString(2, "Arjun");
+            cs1.setInt(3, 45000);
+            cs1.execute();
+            System.out.println("Record Inserted");
 
-            PreparedStatement ps = con.prepareStatement("INSERT INTO Student VALUES (?, ?, ?)");
-            ps.setInt(1, 10);
-            ps.setString(2, "Rahul");
-            ps.setString(3, "Delhi");
-            ps.executeUpdate();
+            // Get Salary of Employee
+            CallableStatement cs2 = con.prepareCall("{call GetSalary(?, ?)}");
+            cs2.setInt(1, 101);
+            cs2.registerOutParameter(2, Types.INTEGER);
+            cs2.execute();
 
-            ps.setInt(1, 11);
-            ps.setString(2, "Kiran");
-            ps.setString(3, "Pune");
-            ps.executeUpdate();
-            System.out.println("Records Inserted");
-
-            PreparedStatement psUpdate = con.prepareStatement("UPDATE Student SET Address=? WHERE RollNo=?");
-            psUpdate.setString(1, "Bangalore");
-            psUpdate.setInt(2, 11);
-            psUpdate.executeUpdate();
-            System.out.println("Record Updated");
-
-            PreparedStatement psDelete = con.prepareStatement("DELETE FROM Student WHERE RollNo=?");
-            psDelete.setInt(1, 10);
-            psDelete.executeUpdate();
-            System.out.println("Record Deleted");
-
-            ResultSet rs = stmt.executeQuery("SELECT * FROM Student");
-            System.out.println("\nStudent Table Records:");
-            System.out.println("--------------------------------");
-            while (rs.next()) {
-                System.out.println(
-                    rs.getInt("RollNo") + "  " +
-                    rs.getString("Name") + "  " +
-                    rs.getString("Address"));
-            }
+            int salary = cs2.getInt(2);
+            System.out.println("Salary of Employee 101 = " + salary);
 
             con.close();
         } catch (Exception e) {
@@ -70,63 +61,91 @@ public class StudentPreparedDemo {
 
 ### Output
 ```
-Table Created Successfully
-Records Inserted
-Record Updated
-Record Deleted
-
-Student Table Records:
---------------------------------
-11  Kiran  Bangalore
+Record Inserted
+Salary of Employee 101 = 45000
 ```
 
 ---
 
-## 6) Addition of Two Numbers Using HTML and JSP
+## 8) Login Form and State Management (Cookies, Session, URL Rewriting)
 
-**Question:**  
-Input two numbers in HTML and display the addition in JSP.
-
-### HTML File: `input.html`
+### HTML Login Page: `login.html`
 ```html
 <!DOCTYPE html>
 <html>
-<head>
-    <title>Addition Form</title>
-</head>
 <body>
-    <h2>Enter Two Numbers</h2>
-    <form action="add.jsp" method="post">
-        Number 1: <input type="text" name="num1"><br><br>
-        Number 2: <input type="text" name="num2"><br><br>
-        <input type="submit" value="Add">
-    </form>
+<h2>Login</h2>
+<form action="LoginServlet" method="post">
+    Username: <input type="text" name="user"><br><br>
+    <input type="submit" value="Login">
+</form>
 </body>
 </html>
 ```
 
-### JSP File: `add.jsp`
-```jsp
-<%
-    int a = Integer.parseInt(request.getParameter("num1"));
-    int b = Integer.parseInt(request.getParameter("num2"));
-    int sum = a + b;
-%>
-<html>
-<body>
-    <h2>Addition Result</h2>
-    <p>The sum of <b><%=a%></b> and <b><%=b%></b> is: <b><%=sum%></b></p>
-</body>
-</html>
+### Servlet: `LoginServlet.java`
+```java
+import java.io.*;
+import javax.servlet.*;
+import javax.servlet.http.*;
+
+public class LoginServlet extends HttpServlet {
+    public void doPost(HttpServletRequest request, HttpServletResponse response)
+    throws ServletException, IOException {
+
+        String user = request.getParameter("user");
+        response.setContentType("text/html");
+        PrintWriter out = response.getWriter();
+
+        // Store using Cookie
+        Cookie c = new Cookie("username", user);
+        response.addCookie(c);
+
+        // Store using Session
+        HttpSession session = request.getSession();
+        session.setAttribute("u", user);
+
+        // URL Rewriting Link
+        out.println("<a href='WelcomeServlet?uname=" + user + "'>Go to Welcome Page</a>");
+    }
+}
+```
+
+### Servlet to Display State: `WelcomeServlet.java`
+```java
+import java.io.*;
+import javax.servlet.*;
+import javax.servlet.http.*;
+
+public class WelcomeServlet extends HttpServlet {
+    public void doGet(HttpServletRequest request, HttpServletResponse response)
+    throws ServletException, IOException {
+
+        response.setContentType("text/html");
+        PrintWriter out = response.getWriter();
+
+        // Cookie Data
+        Cookie[] ck = request.getCookies();
+        String cookieUser = ck[0].getValue();
+
+        // Session Data
+        HttpSession session = request.getSession();
+        String sessionUser = (String) session.getAttribute("u");
+
+        // URL Rewrite Data
+        String urlUser = request.getParameter("uname");
+
+        out.println("<h2>Cookie User: " + cookieUser + "</h2>");
+        out.println("<h2>Session User: " + sessionUser + "</h2>");
+        out.println("<h2>URL Rewrite User: " + urlUser + "</h2>");
+    }
+}
 ```
 
 ### Output
 ```
-Input:
-10 and 20
-
-Result:
-The sum of 10 and 20 is: 30
+Cookie User: Arjun
+Session User: Arjun
+URL Rewrite User: Arjun
 ```
 
----
