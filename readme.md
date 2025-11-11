@@ -1,32 +1,13 @@
-## 7) JDBC Program Using Stored Procedures
+## 10) JDBC Application Demonstrating Scrollable ResultSet
 
 **Question:**  
-Write a JDBC program to interact with a database by creating and invoking stored procedures — one to insert a record into the Employee table and another to retrieve the salary of a given employee ID, and display the results.
+Design a JDBC application which will demonstrate Scrollable Result Set functionality.
 
-### SQL (Run in MySQL Before Running Java Program)
-```sql
-CREATE TABLE Employee (
-    EmpID INT PRIMARY KEY,
-    EmpName VARCHAR(50),
-    Salary INT
-);
-
-CREATE PROCEDURE InsertEmp(IN id INT, IN name VARCHAR(50), IN sal INT)
-BEGIN
-    INSERT INTO Employee VALUES(id, name, sal);
-END;
-
-CREATE PROCEDURE GetSalary(IN id INT, OUT sal INT)
-BEGIN
-    SELECT Salary INTO sal FROM Employee WHERE EmpID = id;
-END;
-```
-
-### Java Program: `StoredProcedureDemo.java`
+### Program: `ScrollableResultSetDemo.java`
 ```java
 import java.sql.*;
 
-public class StoredProcedureDemo {
+public class ScrollableResultSetDemo {
     public static void main(String[] args) {
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
@@ -34,118 +15,108 @@ public class StoredProcedureDemo {
             Connection con = DriverManager.getConnection(
                 "jdbc:mysql://localhost:3306/testdb", "root", "password");
 
-            // Insert Employee Record
-            CallableStatement cs1 = con.prepareCall("{call InsertEmp(?, ?, ?)}");
-            cs1.setInt(1, 101);
-            cs1.setString(2, "Arjun");
-            cs1.setInt(3, 45000);
-            cs1.execute();
-            System.out.println("Record Inserted");
+            Statement stmt = con.createStatement(
+                ResultSet.TYPE_SCROLL_INSENSITIVE,
+                ResultSet.CONCUR_READ_ONLY
+            );
 
-            // Get Salary of Employee
-            CallableStatement cs2 = con.prepareCall("{call GetSalary(?, ?)}");
-            cs2.setInt(1, 101);
-            cs2.registerOutParameter(2, Types.INTEGER);
-            cs2.execute();
+            ResultSet rs = stmt.executeQuery("SELECT * FROM Student");
 
-            int salary = cs2.getInt(2);
-            System.out.println("Salary of Employee 101 = " + salary);
+            System.out.println("Forward Direction:");
+            while(rs.next()) {
+                System.out.println(rs.getInt("RollNo") + "  " + rs.getString("Name"));
+            }
+
+            System.out.println("\nReverse Direction:");
+            while(rs.previous()) {
+                System.out.println(rs.getInt("RollNo") + "  " + rs.getString("Name"));
+            }
+
+            // Move to 2nd Record
+            rs.absolute(2);
+            System.out.println("\nRecord at Position 2:");
+            System.out.println(rs.getInt("RollNo") + "  " + rs.getString("Name"));
 
             con.close();
-        } catch (Exception e) {
+        } catch(Exception e) {
             System.out.println(e);
         }
     }
 }
 ```
 
-### Output
+### Output (Example)
 ```
-Record Inserted
-Salary of Employee 101 = 45000
+Forward Direction:
+1  Arjun
+2  Ravi
+3  Sita
+
+Reverse Direction:
+3  Sita
+2  Ravi
+1  Arjun
+
+Record at Position 2:
+2  Ravi
 ```
 
 ---
 
-## 8) Login Form and State Management (Cookies, Session, URL Rewriting)
+## 11) Testing a Servlet and Deployment Descriptor
 
-### HTML Login Page: `login.html`
-```html
-<!DOCTYPE html>
-<html>
-<body>
-<h2>Login</h2>
-<form action="LoginServlet" method="post">
-    Username: <input type="text" name="user"><br><br>
-    <input type="submit" value="Login">
-</form>
-</body>
-</html>
-```
+**Question:**  
+Write down the Program for testing the Servlet and study deployment descriptor.
 
-### Servlet: `LoginServlet.java`
+### Program: `TestServlet.java`
 ```java
 import java.io.*;
 import javax.servlet.*;
 import javax.servlet.http.*;
 
-public class LoginServlet extends HttpServlet {
-    public void doPost(HttpServletRequest request, HttpServletResponse response)
-    throws ServletException, IOException {
-
-        String user = request.getParameter("user");
-        response.setContentType("text/html");
-        PrintWriter out = response.getWriter();
-
-        // Store using Cookie
-        Cookie c = new Cookie("username", user);
-        response.addCookie(c);
-
-        // Store using Session
-        HttpSession session = request.getSession();
-        session.setAttribute("u", user);
-
-        // URL Rewriting Link
-        out.println("<a href='WelcomeServlet?uname=" + user + "'>Go to Welcome Page</a>");
-    }
-}
-```
-
-### Servlet to Display State: `WelcomeServlet.java`
-```java
-import java.io.*;
-import javax.servlet.*;
-import javax.servlet.http.*;
-
-public class WelcomeServlet extends HttpServlet {
+public class TestServlet extends HttpServlet {
     public void doGet(HttpServletRequest request, HttpServletResponse response)
-    throws ServletException, IOException {
+            throws ServletException, IOException {
 
         response.setContentType("text/html");
         PrintWriter out = response.getWriter();
 
-        // Cookie Data
-        Cookie[] ck = request.getCookies();
-        String cookieUser = ck[0].getValue();
-
-        // Session Data
-        HttpSession session = request.getSession();
-        String sessionUser = (String) session.getAttribute("u");
-
-        // URL Rewrite Data
-        String urlUser = request.getParameter("uname");
-
-        out.println("<h2>Cookie User: " + cookieUser + "</h2>");
-        out.println("<h2>Session User: " + sessionUser + "</h2>");
-        out.println("<h2>URL Rewrite User: " + urlUser + "</h2>");
+        out.println("<html><body>");
+        out.println("<h2>Welcome! Servlet is Working Successfully.</h2>");
+        out.println("</body></html>");
     }
 }
 ```
 
-### Output
+### Deployment Descriptor: `web.xml`
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns="http://java.sun.com/xml/ns/javaee"
+         version="3.0">
+
+    <servlet>
+        <servlet-name>test</servlet-name>
+        <servlet-class>TestServlet</servlet-class>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>test</servlet-name>
+        <url-pattern>/test</url-pattern>
+    </servlet-mapping>
+
+</web-app>
 ```
-Cookie User: Arjun
-Session User: Arjun
-URL Rewrite User: Arjun
+
+### How to Run
+1. Place `TestServlet.java` inside **src**.
+2. Place `web.xml` inside **WEB-INF**.
+3. Run Tomcat and open:
+```
+http://localhost:8080/YourProjectName/test
+```
+
+### Sample Output
+```
+Welcome! Servlet is Working Successfully.
 ```
 
