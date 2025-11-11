@@ -1,131 +1,75 @@
-## 13) CRUD Operations Using Spring JDBC Template
+## 16) JDBC Batch Processing
 
 **Question:**  
-Write a JDBC program to perform CRUD operations using Spring JDBC Template.
+Write a JDBC program to perform batch processing to insert multiple records into the Employee table and display success status.
 
-### 1) `applicationContext.xml`
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<beans xmlns="http://www.springframework.org/schema/beans"
-       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-       xsi:schemaLocation="
-       http://www.springframework.org/schema/beans
-       http://www.springframework.org/schema/beans/spring-beans.xsd">
-
-    <bean id="dataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource">
-        <property name="driverClassName" value="com.mysql.cj.jdbc.Driver" />
-        <property name="url" value="jdbc:mysql://localhost:3306/testdb" />
-        <property name="username" value="root" />
-        <property name="password" value="password" />
-    </bean>
-
-    <bean id="jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate">
-        <property name="dataSource" ref="dataSource" />
-    </bean>
-
-    <bean id="employeeDAO" class="EmployeeDAO">
-        <property name="jdbcTemplate" ref="jdbcTemplate" />
-    </bean>
-
-</beans>
-```
-
-### 2) `EmployeeDAO.java`
+### Program: `BatchInsertDemo.java`
 ```java
-import org.springframework.jdbc.core.JdbcTemplate;
+import java.sql.*;
 
-public class EmployeeDAO {
-    JdbcTemplate jdbcTemplate;
-
-    public void setJdbcTemplate(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
-    }
-
-    public void insert(int id, String name, int salary) {
-        jdbcTemplate.update("INSERT INTO Employee VALUES (?, ?, ?)", id, name, salary);
-        System.out.println("Record Inserted");
-    }
-
-    public void update(int id, int salary) {
-        jdbcTemplate.update("UPDATE Employee SET Salary=? WHERE EmpID=?", salary, id);
-        System.out.println("Record Updated");
-    }
-
-    public void delete(int id) {
-        jdbcTemplate.update("DELETE FROM Employee WHERE EmpID=?", id);
-        System.out.println("Record Deleted");
-    }
-}
-```
-
-### 3) `Main.java`
-```java
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
-
-public class Main {
+public class BatchInsertDemo {
     public static void main(String[] args) {
-        ApplicationContext ctx = new ClassPathXmlApplicationContext("applicationContext.xml");
-        EmployeeDAO dao = (EmployeeDAO) ctx.getBean("employeeDAO");
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
 
-        dao.insert(1, "Arjun", 45000);
-        dao.update(1, 50000);
-        dao.delete(1);
+            Connection con = DriverManager.getConnection(
+                "jdbc:mysql://localhost:3306/testdb", "root", "password");
+
+            Statement stmt = con.createStatement();
+
+            stmt.addBatch("INSERT INTO Employee VALUES (201, 'Arjun', 45000)");
+            stmt.addBatch("INSERT INTO Employee VALUES (202, 'Ravi', 48000)");
+            stmt.addBatch("INSERT INTO Employee VALUES (203, 'Sita', 50000)");
+
+            int result[] = stmt.executeBatch();
+            System.out.println("Batch Executed Successfully");
+            System.out.println("Inserted Records: " + result.length);
+
+            con.close();
+        } catch (Exception e) {
+            System.out.println(e);
+        }
     }
 }
 ```
 
 ### Output
 ```
-Record Inserted
-Record Updated
-Record Deleted
+Batch Executed Successfully
+Inserted Records: 3
 ```
 
 ---
 
-## 15) Addition of Two Numbers Using HTML and JSP
+## 17) JSTL Core Tag Demonstration
 
 **Question:**  
-Write down the program in which input the two numbers in an HTML file and then display the addition in JSP file.
+Write a program which demonstrates the Core tag of JSTL.
 
-### `input.html`
-```html
-<!DOCTYPE html>
-<html>
-<head><title>Add Two Numbers</title></head>
-<body>
-<h2>Enter Two Numbers</h2>
-<form action="add.jsp" method="post">
-    Number 1: <input type="text" name="num1"><br><br>
-    Number 2: <input type="text" name="num2"><br><br>
-    <input type="submit" value="Add">
-</form>
-</body>
-</html>
-```
-
-### `add.jsp`
+### `coreDemo.jsp`
 ```jsp
-<%
-    int a = Integer.parseInt(request.getParameter("num1"));
-    int b = Integer.parseInt(request.getParameter("num2"));
-    int sum = a + b;
-%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <html>
 <body>
-<h2>Addition Result</h2>
-<p>The sum of <b><%=a%></b> and <b><%=b%></b> is: <b><%=sum%></b></p>
+<h2>JSTL Core Tag Demo</h2>
+
+<c:set var="name" value="Arjun"/>
+<p>Name: <c:out value="${name}"/></p>
+
+<c:forEach var="i" begin="1" end="5">
+    Number: <c:out value="${i}"/> <br>
+</c:forEach>
+
 </body>
 </html>
 ```
 
 ### Output
 ```
-Input:
-10 and 20
-
-Result:
-The sum of 10 and 20 is: 30
+Name: Arjun
+Number: 1
+Number: 2
+Number: 3
+Number: 4
+Number: 5
 ```
-
