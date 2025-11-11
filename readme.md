@@ -2,58 +2,62 @@
 
 ---
 
-## 1) JDBC Program using Statement Object
+## 4) JDBC Program using PreparedStatement
 
 **Question:**  
-Write a JDBC program using the Statement object to create a Student table (RollNo, Name, Address) and perform insert, update, delete, and display operations.
+Write a JDBC program using the PreparedStatement object to create a Student table (RollNo, Name, Address) and perform insert, update, delete, and display operations.
 
-### Program: `StudentDB.java`
+### Program: `StudentPreparedDemo.java`
 ```java
 import java.sql.*;
 
-public class StudentDB {
+public class StudentPreparedDemo {
     public static void main(String[] args) {
         try {
-            // Load Driver
             Class.forName("com.mysql.cj.jdbc.Driver");
 
-            // Create Connection
             Connection con = DriverManager.getConnection(
                     "jdbc:mysql://localhost:3306/testdb", "root", "password");
 
-            // Create Statement
+            String create = "CREATE TABLE IF NOT EXISTS Student (" +
+                            "RollNo INT PRIMARY KEY, " +
+                            "Name VARCHAR(50), " +
+                            "Address VARCHAR(100))";
             Statement stmt = con.createStatement();
-
-            // Create Table
-            String q1 = "CREATE TABLE IF NOT EXISTS Student (" +
-                        "RollNo INT PRIMARY KEY, " +
-                        "Name VARCHAR(50), " +
-                        "Address VARCHAR(100))";
-            stmt.executeUpdate(q1);
+            stmt.executeUpdate(create);
             System.out.println("Table Created Successfully");
 
-            // Insert Records
-            stmt.executeUpdate("INSERT INTO Student VALUES (1, 'Arjun', 'Hyderabad')");
-            stmt.executeUpdate("INSERT INTO Student VALUES (2, 'Ravi', 'Chennai')");
-            stmt.executeUpdate("INSERT INTO Student VALUES (3, 'Sita', 'Mumbai')");
+            PreparedStatement ps = con.prepareStatement("INSERT INTO Student VALUES (?, ?, ?)");
+            ps.setInt(1, 10);
+            ps.setString(2, "Rahul");
+            ps.setString(3, "Delhi");
+            ps.executeUpdate();
+
+            ps.setInt(1, 11);
+            ps.setString(2, "Kiran");
+            ps.setString(3, "Pune");
+            ps.executeUpdate();
             System.out.println("Records Inserted");
 
-            // Update Record
-            stmt.executeUpdate("UPDATE Student SET Address='Bangalore' WHERE RollNo=2");
+            PreparedStatement psUpdate = con.prepareStatement("UPDATE Student SET Address=? WHERE RollNo=?");
+            psUpdate.setString(1, "Bangalore");
+            psUpdate.setInt(2, 11);
+            psUpdate.executeUpdate();
             System.out.println("Record Updated");
 
-            // Delete Record
-            stmt.executeUpdate("DELETE FROM Student WHERE RollNo=3");
+            PreparedStatement psDelete = con.prepareStatement("DELETE FROM Student WHERE RollNo=?");
+            psDelete.setInt(1, 10);
+            psDelete.executeUpdate();
             System.out.println("Record Deleted");
 
-            // Display Records
             ResultSet rs = stmt.executeQuery("SELECT * FROM Student");
             System.out.println("\nStudent Table Records:");
             System.out.println("--------------------------------");
             while (rs.next()) {
-                System.out.println(rs.getInt("RollNo") + "  " +
-                                   rs.getString("Name") + "  " +
-                                   rs.getString("Address"));
+                System.out.println(
+                    rs.getInt("RollNo") + "  " +
+                    rs.getString("Name") + "  " +
+                    rs.getString("Address"));
             }
 
             con.close();
@@ -73,68 +77,56 @@ Record Deleted
 
 Student Table Records:
 --------------------------------
-1  Arjun  Hyderabad
-2  Ravi   Bangalore
+11  Kiran  Bangalore
 ```
 
 ---
 
-## 2) Servlet Program and Deployment Descriptor
+## 6) Addition of Two Numbers Using HTML and JSP
 
 **Question:**  
-Write down the program for testing the Servlet and study deployment descriptor.
+Input two numbers in HTML and display the addition in JSP.
 
-### Program: `TestServlet.java`
-```java
-import java.io.*;
-import javax.servlet.*;
-import javax.servlet.http.*;
-
-public class TestServlet extends HttpServlet {
-    public void doGet(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-
-        response.setContentType("text/html");
-        PrintWriter out = response.getWriter();
-
-        out.println("<html><body>");
-        out.println("<h2>Welcome! Servlet is Working Successfully.</h2>");
-        out.println("</body></html>");
-    }
-}
+### HTML File: `input.html`
+```html
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Addition Form</title>
+</head>
+<body>
+    <h2>Enter Two Numbers</h2>
+    <form action="add.jsp" method="post">
+        Number 1: <input type="text" name="num1"><br><br>
+        Number 2: <input type="text" name="num2"><br><br>
+        <input type="submit" value="Add">
+    </form>
+</body>
+</html>
 ```
 
-### Deployment Descriptor: `web.xml`
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<web-app xmlns="http://java.sun.com/xml/ns/javaee"
-         version="3.0">
-
-    <servlet>
-        <servlet-name>test</servlet-name>
-        <servlet-class>TestServlet</servlet-class>
-    </servlet>
-
-    <servlet-mapping>
-        <servlet-name>test</servlet-name>
-        <url-pattern>/test</url-pattern>
-    </servlet-mapping>
-
-</web-app>
-```
-
-### How to Run
-1. Place `TestServlet.java` in **src** folder.
-2. Place `web.xml` inside **WEB-INF** folder.
-3. Deploy project on **Apache Tomcat**.
-4. Open browser and enter:
-```
-http://localhost:8080/YourProjectName/test
+### JSP File: `add.jsp`
+```jsp
+<%
+    int a = Integer.parseInt(request.getParameter("num1"));
+    int b = Integer.parseInt(request.getParameter("num2"));
+    int sum = a + b;
+%>
+<html>
+<body>
+    <h2>Addition Result</h2>
+    <p>The sum of <b><%=a%></b> and <b><%=b%></b> is: <b><%=sum%></b></p>
+</body>
+</html>
 ```
 
 ### Output
 ```
-Welcome! Servlet is Working Successfully.
+Input:
+10 and 20
+
+Result:
+The sum of 10 and 20 is: 30
 ```
 
 ---
