@@ -1,122 +1,131 @@
-## 10) JDBC Application Demonstrating Scrollable ResultSet
+## 13) CRUD Operations Using Spring JDBC Template
 
 **Question:**  
-Design a JDBC application which will demonstrate Scrollable Result Set functionality.
+Write a JDBC program to perform CRUD operations using Spring JDBC Template.
 
-### Program: `ScrollableResultSetDemo.java`
+### 1) `applicationContext.xml`
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="
+       http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <bean id="dataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+        <property name="driverClassName" value="com.mysql.cj.jdbc.Driver" />
+        <property name="url" value="jdbc:mysql://localhost:3306/testdb" />
+        <property name="username" value="root" />
+        <property name="password" value="password" />
+    </bean>
+
+    <bean id="jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate">
+        <property name="dataSource" ref="dataSource" />
+    </bean>
+
+    <bean id="employeeDAO" class="EmployeeDAO">
+        <property name="jdbcTemplate" ref="jdbcTemplate" />
+    </bean>
+
+</beans>
+```
+
+### 2) `EmployeeDAO.java`
 ```java
-import java.sql.*;
+import org.springframework.jdbc.core.JdbcTemplate;
 
-public class ScrollableResultSetDemo {
-    public static void main(String[] args) {
-        try {
-            Class.forName("com.mysql.cj.jdbc.Driver");
+public class EmployeeDAO {
+    JdbcTemplate jdbcTemplate;
 
-            Connection con = DriverManager.getConnection(
-                "jdbc:mysql://localhost:3306/testdb", "root", "password");
+    public void setJdbcTemplate(JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
+    }
 
-            Statement stmt = con.createStatement(
-                ResultSet.TYPE_SCROLL_INSENSITIVE,
-                ResultSet.CONCUR_READ_ONLY
-            );
+    public void insert(int id, String name, int salary) {
+        jdbcTemplate.update("INSERT INTO Employee VALUES (?, ?, ?)", id, name, salary);
+        System.out.println("Record Inserted");
+    }
 
-            ResultSet rs = stmt.executeQuery("SELECT * FROM Student");
+    public void update(int id, int salary) {
+        jdbcTemplate.update("UPDATE Employee SET Salary=? WHERE EmpID=?", salary, id);
+        System.out.println("Record Updated");
+    }
 
-            System.out.println("Forward Direction:");
-            while(rs.next()) {
-                System.out.println(rs.getInt("RollNo") + "  " + rs.getString("Name"));
-            }
-
-            System.out.println("\nReverse Direction:");
-            while(rs.previous()) {
-                System.out.println(rs.getInt("RollNo") + "  " + rs.getString("Name"));
-            }
-
-            // Move to 2nd Record
-            rs.absolute(2);
-            System.out.println("\nRecord at Position 2:");
-            System.out.println(rs.getInt("RollNo") + "  " + rs.getString("Name"));
-
-            con.close();
-        } catch(Exception e) {
-            System.out.println(e);
-        }
+    public void delete(int id) {
+        jdbcTemplate.update("DELETE FROM Employee WHERE EmpID=?", id);
+        System.out.println("Record Deleted");
     }
 }
 ```
 
-### Output (Example)
+### 3) `Main.java`
+```java
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+
+public class Main {
+    public static void main(String[] args) {
+        ApplicationContext ctx = new ClassPathXmlApplicationContext("applicationContext.xml");
+        EmployeeDAO dao = (EmployeeDAO) ctx.getBean("employeeDAO");
+
+        dao.insert(1, "Arjun", 45000);
+        dao.update(1, 50000);
+        dao.delete(1);
+    }
+}
 ```
-Forward Direction:
-1  Arjun
-2  Ravi
-3  Sita
 
-Reverse Direction:
-3  Sita
-2  Ravi
-1  Arjun
-
-Record at Position 2:
-2  Ravi
+### Output
+```
+Record Inserted
+Record Updated
+Record Deleted
 ```
 
 ---
 
-## 11) Testing a Servlet and Deployment Descriptor
+## 15) Addition of Two Numbers Using HTML and JSP
 
 **Question:**  
-Write down the Program for testing the Servlet and study deployment descriptor.
+Write down the program in which input the two numbers in an HTML file and then display the addition in JSP file.
 
-### Program: `TestServlet.java`
-```java
-import java.io.*;
-import javax.servlet.*;
-import javax.servlet.http.*;
-
-public class TestServlet extends HttpServlet {
-    public void doGet(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-
-        response.setContentType("text/html");
-        PrintWriter out = response.getWriter();
-
-        out.println("<html><body>");
-        out.println("<h2>Welcome! Servlet is Working Successfully.</h2>");
-        out.println("</body></html>");
-    }
-}
+### `input.html`
+```html
+<!DOCTYPE html>
+<html>
+<head><title>Add Two Numbers</title></head>
+<body>
+<h2>Enter Two Numbers</h2>
+<form action="add.jsp" method="post">
+    Number 1: <input type="text" name="num1"><br><br>
+    Number 2: <input type="text" name="num2"><br><br>
+    <input type="submit" value="Add">
+</form>
+</body>
+</html>
 ```
 
-### Deployment Descriptor: `web.xml`
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<web-app xmlns="http://java.sun.com/xml/ns/javaee"
-         version="3.0">
-
-    <servlet>
-        <servlet-name>test</servlet-name>
-        <servlet-class>TestServlet</servlet-class>
-    </servlet>
-
-    <servlet-mapping>
-        <servlet-name>test</servlet-name>
-        <url-pattern>/test</url-pattern>
-    </servlet-mapping>
-
-</web-app>
+### `add.jsp`
+```jsp
+<%
+    int a = Integer.parseInt(request.getParameter("num1"));
+    int b = Integer.parseInt(request.getParameter("num2"));
+    int sum = a + b;
+%>
+<html>
+<body>
+<h2>Addition Result</h2>
+<p>The sum of <b><%=a%></b> and <b><%=b%></b> is: <b><%=sum%></b></p>
+</body>
+</html>
 ```
 
-### How to Run
-1. Place `TestServlet.java` inside **src**.
-2. Place `web.xml` inside **WEB-INF**.
-3. Run Tomcat and open:
+### Output
 ```
-http://localhost:8080/YourProjectName/test
-```
+Input:
+10 and 20
 
-### Sample Output
-```
-Welcome! Servlet is Working Successfully.
+Result:
+The sum of 10 and 20 is: 30
 ```
 
